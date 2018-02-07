@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Screen Pointing</title>
+		<style type="text/css">
+			html, body {
+				height: 100%;
+				margin: 0;
+			}
+	
+			#wrapper {
+				min-height: 100%; 
+				background-color: aqua;
+			}
+		</style>
+	</head>
+    <body>
+		<div id="wrapper">TOP LEFT</div>
+		<script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+		<script>
+			// PEER JS
+			var peer = new Peer({key: 'myapikey'}); // Get your api key at http://peerjs.com/
+			peer.on('error', function(err) {
+				console.log(err);
+				peer.reconnect();
+			});
+
+			//ORIENTATION
+			var alpha, beta, gamma;
+			var peer_id = getUrlParameter('id');
+			var touch = false;
+			var directions = ["TOP LEFT", "TOP RIGHT", "BOTTOM LEFT", "BOTTOM RIGHT"];
+			var accelerations = [[0.0, 0.0, 0.0] , [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]];
+			var i = 0;
+			var el = document.getElementById("wrapper");
+
+			// Developers still needing absolute values may use the ondeviceorientationabsolute event. 
+			window.addEventListener('deviceorientation', function(event) {
+				alpha = event.alpha;
+				beta = event.beta;
+				gamma = event.gamma;
+				if(i>=4 && touch){
+					var conn = peer.connect(peer_id);
+					conn.on('open', function(){
+						conn.send([alpha,beta,gamma]);
+					});
+				}
+			}); 
+	
+			el.addEventListener("touchstart", function(evt) {
+				evt.preventDefault();
+				console.log("touchstart.");
+				var el = document.getElementById("wrapper");
+				el.style.backgroundColor = "blue"
+				touch = true;
+			});
+
+			el.addEventListener("touchend", function(evt) {
+				evt.preventDefault();
+				console.log("touchend.");
+				var el = document.getElementById("wrapper");
+				el.style.backgroundColor = "aqua"
+				if(i<4){
+					accelerations[i] = [alpha, beta, gamma];
+					var conn = peer.connect(peer_id);
+					conn.on('open', function(){
+						conn.send([alpha,beta,gamma]);
+					});
+					i++;
+					if (i==4){
+						el.innerHTML = "<h2>CALIBRATED</h2>";
+						el.innerHTML += "<h3>Touch to point</h3>";
+						el.innerHTML += "<b>Debug information:</b></br>";
+						el.innerHTML += "-<b>"+directions[0]+"</b></br>: x="+accelerations[0][0]+"</br>, y="+accelerations[0][1]+"</br> z="+accelerations[0][2]+"</br>";
+						el.innerHTML += "-<b>"+directions[1]+"</b>:</br> x="+accelerations[1][0]+"</br> y="+accelerations[1][1]+"</br> z="+accelerations[1][2]+"</br>";
+						el.innerHTML += "-<b>"+directions[2]+"</b>:</br> x="+accelerations[2][0]+"</br> y="+accelerations[2][1]+"</br> z="+accelerations[2][2]+"</br>";
+						el.innerHTML += "-<b>"+directions[3]+"</b>:</br> x="+accelerations[3][0]+"</br> y="+accelerations[3][1]+"</br> z="+accelerations[3][2]+"</br>";
+					}
+				}
+				touch=false;
+			});
+
+			function getUrlParameter(sParam) {
+            //http://www.jquerybyexample.net/2012/06/get-url-parameters-using-jquery.html
+                var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+                    sURLVariables = sPageURL.split('&'),
+                    sParameterName,
+                    i;
+
+                for (i = 0; i < sURLVariables.length; i++) {
+                    sParameterName = sURLVariables[i].split('=');
+
+                    if (sParameterName[0] === sParam) {
+                        return sParameterName[1] === undefined ? true : sParameterName[1];
+                    }
+                }
+            };
+		</script>
+	</body>
+</html>

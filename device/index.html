@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>IVE Pointing Overlay</title>
+	</head>
+    <body>
+        <div id="connection" align="center"></div>
+        <img style="position:absolute; TOP:0px; LEFT:0px; WIDTH:100px; HEIGHT:100px" src="img/square.png" id="square">
+        <img style="visibility:hidden" src="img/aim.png" id="target">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+        <script>
+            var peer_id = null;
+            var height = $(document).height(); // returns height of HTML document (same as pageHeight in screenshot)
+            var width = $(document).width(); // returns width of HTML document (same as pageWidth in screenshot)
+            var i = 0;
+            var accelerations = [[0.0, 0.0, 0.0] , [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]];
+            var styles = [  "position:absolute; TOP:0px; LEFT:"+(width-100.0)+"px; WIDTH:100px; HEIGHT:100px",
+                            "position:absolute; TOP:"+(height-100.0)+"px; LEFT:0px; WIDTH:100px; HEIGHT:100px",
+                            "position:absolute; TOP:"+(height-100.0)+"px; LEFT:"+(width-100.0)+"px; WIDTH:100px; HEIGHT:100px",
+                            "visibility:hidden" ];
+
+            // WebRTC DataChannel
+            var peer = new Peer({key: 'myapikey'}); // get your api key at http://peerjs.com/
+            peer.on('connection', function(conn) {
+                document.getElementById("connection").innerHTML = "";
+                conn.on('data', function(data){
+                    if(i<4){
+                        console.log(data);
+                        accelerations[i]=data;
+                        document.getElementById("square").style = styles[i];
+                        console.log(document.getElementById("square"));
+                        i++;
+                    } else {
+                        var pixelcoord = convertCoord(data[0], data[1]);
+                        document.getElementById("target").style = "position:absolute; TOP:"+pixelcoord[0]+"px; LEFT:"+pixelcoord[1]+"px; WIDTH:50px; HEIGHT:50px";
+                    }
+                });
+            });
+            //peer.on('error', function(err) {
+				//console.log(err);
+                //console.log(peer.reconnect());
+			//});
+            peer.on('open', function(id) {
+                //console.log('My peer ID is: ' + id);
+                peer_id = id;
+                document.getElementById("connection").innerHTML = "</br></br><h1>"+peer_id+"</h1>";
+            });
+
+            function convertCoord(x, y) {
+                // http://www.chuidiang.org/clinux/x11/graficos/coordenadas.php
+                var xMin = accelerations[0][0];
+                var xMax = accelerations[1][0];
+                var yMin = accelerations[2][1];
+                var yMax = accelerations[0][1];
+                var final_x =  (x-xMin) / (xMax-xMin) * width; 
+                var final_y =  height - (y-yMin) / (yMax-yMin) * height; 
+                return [final_y, final_x]; // CAREFUL!!!!
+            }
+
+        </script>
+	</body>
+</html>
+
