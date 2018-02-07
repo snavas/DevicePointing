@@ -24,7 +24,7 @@
                             "visibility:hidden" ];
 
             // WebRTC DataChannel
-            var peer = new Peer({key: 'chyp1hxf4mnasjor'}); // get your api key at http://peerjs.com/
+            var peer = new Peer({key: 'chyp1hxf4mnasjor', secure: true}); // get your api key at http://peerjs.com/
             peer.on('connection', function(conn) {
                 document.getElementById("connection").innerHTML = "";
                 conn.on('data', function(data){

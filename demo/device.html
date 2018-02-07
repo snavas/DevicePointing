@@ -22,7 +22,7 @@
 		<script src="js/peer.js"></script>
 		<script>
 			// PEER JS
-			var peer = new Peer({key: 'chyp1hxf4mnasjor'}); // Get your api key at http://peerjs.com/
+			var peer = new Peer({key: 'chyp1hxf4mnasjor', secure: true}); // Get your api key at http://peerjs.com/
 			peer.on('error', function(err) {
 				console.log(err);
 				peer.reconnect();
