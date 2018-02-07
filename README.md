@@ -20,9 +20,9 @@ This project has only been tested in Google Chrome in Windows and Android
 
 ### DEMO
 
-[screen.html](demo/screen.html)
+[screen.html](https://snavas.github.io/DevicePointing/demo/screen.html)
 
-[device.html] (demo/device.html)
+[device.html](https://snavas.github.io/DevicePointing/demo/device.html)
 
 ### FAQS
 
