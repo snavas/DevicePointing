@@ -24,7 +24,7 @@
                             "visibility:hidden" ];
 
             // WebRTC DataChannel
-            var peer = new Peer({key: 'chyp1hxf4mnasjor', secure: true}); // get your api key at http://peerjs.com/
+            var peer = new Peer({key: 'chyp1hxf4mnasjor', secure: true, debug: 3}); // get your api key at http://peerjs.com/
             peer.on('connection', function(conn) {
                 document.getElementById("connection").innerHTML = "";
                 conn.on('data', function(data){
@@ -45,7 +45,7 @@
                 //console.log(peer.reconnect());
 			//});
             peer.on('open', function(id) {
-                //console.log('My peer ID is: ' + id);
+                console.log('My peer ID is: ' + id);
                 peer_id = id;
                 document.getElementById("connection").innerHTML = "</br></br><h1>"+peer_id+"</h1>";
             });
