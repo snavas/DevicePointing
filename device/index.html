@@ -4,64 +4,100 @@
         <meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>IVE Pointing Overlay</title>
+		<title>Screen Pointing</title>
+		<style type="text/css">
+			html, body {
+				height: 100%;
+				margin: 0;
+			}
+	
+			#wrapper {
+				min-height: 100%; 
+				background-color: aqua;
+			}
+		</style>
 	</head>
     <body>
-        <div id="connection" align="center"></div>
-        <img style="position:absolute; TOP:0px; LEFT:0px; WIDTH:100px; HEIGHT:100px" src="img/square.png" id="square">
-        <img style="visibility:hidden" src="img/aim.png" id="target">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
-        <script>
-            var peer_id = null;
-            var height = $(document).height(); // returns height of HTML document (same as pageHeight in screenshot)
-            var width = $(document).width(); // returns width of HTML document (same as pageWidth in screenshot)
-            var i = 0;
-            var accelerations = [[0.0, 0.0, 0.0] , [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]];
-            var styles = [  "position:absolute; TOP:0px; LEFT:"+(width-100.0)+"px; WIDTH:100px; HEIGHT:100px",
-                            "position:absolute; TOP:"+(height-100.0)+"px; LEFT:0px; WIDTH:100px; HEIGHT:100px",
-                            "position:absolute; TOP:"+(height-100.0)+"px; LEFT:"+(width-100.0)+"px; WIDTH:100px; HEIGHT:100px",
-                            "visibility:hidden" ];
+		<div id="wrapper">TOP LEFT</div>
+		<script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+		<script>
+			// PEER JS
+			var peer = new Peer({key: 'myapikey'}); // Get your api key at http://peerjs.com/
+			peer.on('error', function(err) {
+				console.log(err);
+				peer.reconnect();
+			});
 
-            // WebRTC DataChannel
-            var peer = new Peer({key: 'myapikey'}); // get your api key at http://peerjs.com/
-            peer.on('connection', function(conn) {
-                document.getElementById("connection").innerHTML = "";
-                conn.on('data', function(data){
-                    if(i<4){
-                        console.log(data);
-                        accelerations[i]=data;
-                        document.getElementById("square").style = styles[i];
-                        console.log(document.getElementById("square"));
-                        i++;
-                    } else {
-                        var pixelcoord = convertCoord(data[0], data[1]);
-                        document.getElementById("target").style = "position:absolute; TOP:"+pixelcoord[0]+"px; LEFT:"+pixelcoord[1]+"px; WIDTH:50px; HEIGHT:50px";
+			//ORIENTATION
+			var alpha, beta, gamma;
+			var peer_id = getUrlParameter('id');
+			var touch = false;
+			var directions = ["TOP LEFT", "TOP RIGHT", "BOTTOM LEFT", "BOTTOM RIGHT"];
+			var accelerations = [[0.0, 0.0, 0.0] , [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]];
+			var i = 0;
+			var el = document.getElementById("wrapper");
+
+			// Developers still needing absolute values may use the ondeviceorientationabsolute event. 
+			window.addEventListener('deviceorientation', function(event) {
+				alpha = event.alpha;
+				beta = event.beta;
+				gamma = event.gamma;
+				if(i>=4 && touch){
+					var conn = peer.connect(peer_id);
+					conn.on('open', function(){
+						conn.send([alpha,beta,gamma]);
+					});
+				}
+			}); 
+	
+			el.addEventListener("touchstart", function(evt) {
+				evt.preventDefault();
+				console.log("touchstart.");
+				var el = document.getElementById("wrapper");
+				el.style.backgroundColor = "blue"
+				touch = true;
+			});
+
+			el.addEventListener("touchend", function(evt) {
+				evt.preventDefault();
+				console.log("touchend.");
+				var el = document.getElementById("wrapper");
+				el.style.backgroundColor = "aqua"
+				if(i<4){
+					accelerations[i] = [alpha, beta, gamma];
+					var conn = peer.connect(peer_id);
+					conn.on('open', function(){
+						conn.send([alpha,beta,gamma]);
+					});
+					i++;
+					if (i==4){
+						el.innerHTML = "<h2>CALIBRATED</h2>";
+						el.innerHTML += "<h3>Touch to point</h3>";
+						el.innerHTML += "<b>Debug information:</b></br>";
+						el.innerHTML += "-<b>"+directions[0]+"</b></br>: x="+accelerations[0][0]+"</br>, y="+accelerations[0][1]+"</br> z="+accelerations[0][2]+"</br>";
+						el.innerHTML += "-<b>"+directions[1]+"</b>:</br> x="+accelerations[1][0]+"</br> y="+accelerations[1][1]+"</br> z="+accelerations[1][2]+"</br>";
+						el.innerHTML += "-<b>"+directions[2]+"</b>:</br> x="+accelerations[2][0]+"</br> y="+accelerations[2][1]+"</br> z="+accelerations[2][2]+"</br>";
+						el.innerHTML += "-<b>"+directions[3]+"</b>:</br> x="+accelerations[3][0]+"</br> y="+accelerations[3][1]+"</br> z="+accelerations[3][2]+"</br>";
+					}
+				}
+				touch=false;
+			});
+
+			function getUrlParameter(sParam) {
+            //http://www.jquerybyexample.net/2012/06/get-url-parameters-using-jquery.html
+                var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+                    sURLVariables = sPageURL.split('&'),
+                    sParameterName,
+                    i;
+
+                for (i = 0; i < sURLVariables.length; i++) {
+                    sParameterName = sURLVariables[i].split('=');
+
+                    if (sParameterName[0] === sParam) {
+                        return sParameterName[1] === undefined ? true : sParameterName[1];
                     }
-                });
-            });
-            //peer.on('error', function(err) {
-				//console.log(err);
-                //console.log(peer.reconnect());
-			//});
-            peer.on('open', function(id) {
-                //console.log('My peer ID is: ' + id);
-                peer_id = id;
-                document.getElementById("connection").innerHTML = "</br></br><h1>"+peer_id+"</h1>";
-            });
-
-            function convertCoord(x, y) {
-                // http://www.chuidiang.org/clinux/x11/graficos/coordenadas.php
-                var xMin = accelerations[0][0];
-                var xMax = accelerations[1][0];
-                var yMin = accelerations[2][1];
-                var yMax = accelerations[0][1];
-                var final_x =  (x-xMin) / (xMax-xMin) * width; 
-                var final_y =  height - (y-yMin) / (yMax-yMin) * height; 
-                return [final_y, final_x]; // CAREFUL!!!!
-            }
-
-        </script>
+                }
+            };
+		</script>
 	</body>
 </html>
-
